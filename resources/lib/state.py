@@ -5,7 +5,7 @@ import xbmcaddon
 from hyperion.Hyperion import Hyperion
 from misc import log
 from misc import notify
-
+from PIL import Image
 
 class DisconnectedState:
     '''
@@ -57,6 +57,7 @@ class ConnectedState:
         self.__capture = None
         self.__captureState = None
         self.__data = None
+        self.__counter = 0
 
         # try to connect to hyperion
         self.__hyperion = Hyperion(self.__settings.address, self.__settings.port)
@@ -105,6 +106,13 @@ class ConnectedState:
             if self.__capture.getImageFormat() == 'BGRA':
                 del self.__data[3::4]
                 self.__data[0::3], self.__data[2::3] = self.__data[2::3], self.__data[0::3]
+                ba = self.__data
+                size = (self.__capture.getWidth(), self.__capture.getHeight())
+                img = Image.frombuffer('RGB', size, str(ba), 'raw', 'RGB', 0, 1)
+                #img.save("C:/tmp/kodi/image"+str(self.__counter)+".jpg")
+                img.save("/storage/screenshots/"+str(self.__counter)+".jpg")
+                log("Saved image "+str(self.__counter)+".jpg")				
+                self.__counter += 1	   
 
             try:
                 # send image to hyperion
@@ -112,6 +120,7 @@ class ConnectedState:
                                           self.__settings.priority, -1)
             except Exception, e:
                 # unable to send image. notify and go to the error state
+                log(e)	
                 notify(xbmcaddon.Addon().getLocalizedString(32101))
                 return ErrorState(self.__settings)
         else:

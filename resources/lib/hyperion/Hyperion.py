@@ -23,6 +23,9 @@
 '''
 import socket
 import struct
+import xbmc
+import xbmcaddon
+import binascii		   
 
 #protobuf message includes
 from message_pb2 import HyperionRequest
@@ -90,6 +93,7 @@ class Hyperion(object):
         imageRequest = request.Extensions[ImageRequest.imageRequest]
         imageRequest.imagewidth = width
         imageRequest.imageheight = height
+        self.__log1(binascii.b2a_hex(data))	   
         imageRequest.imagedata = str(data)
         imageRequest.priority = priority
         imageRequest.duration = duration
@@ -119,14 +123,21 @@ class Hyperion(object):
 
         # send the message 
         self.__sendMessage(request)
-        
+
+    def __log1(self, msg):
+        '''Write a debug message to the Kodi log
+        '''
+        addon = xbmcaddon.Addon()
+        xbmc.log("### [%s] - %s" % (addon.getAddonInfo('name'),msg,), level=xbmc.LOGERROR)
+
     def __sendMessage(self, message):
         '''Send the given proto message to Hyperion. A RuntimeError will 
         be raised if the reply contains an error
         - message : proto request to send
         '''
         #print "send message to Hyperion (%d):\n%s" % (len(message.SerializeToString()), message)
-
+        msg = "send message to Hyperion (%d):\n%s" % (len(message.SerializeToString()), message)
+        self.__log1(msg)			
         # send message to Hyperion"
         binaryRequest = message.SerializeToString()
         binarySize = struct.pack(">I", len(binaryRequest))
@@ -139,6 +150,8 @@ class Hyperion(object):
         reply.ParseFromString(self.__socket.recv(size))
         
         # check the reply
+        msg2 = "Reply received:\n%s" % (reply)
+        self.__log1(msg2)		 
         #print "Reply received:\n%s" % (reply)
         if not reply.success:
             raise RuntimeError("Hyperion server error: " + reply.error)
