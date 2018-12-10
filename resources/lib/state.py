@@ -1,6 +1,7 @@
 import math
 import xbmc
 import xbmcaddon
+import binascii
 
 from hyperion.Hyperion import Hyperion
 from misc import log
@@ -97,7 +98,8 @@ class ConnectedState:
         startReadOut = False
 
         self.__data = self.__capture.getImage()
-        if len(self.__data) > 0:
+        hexdata = binascii.b2a_hex(self.__data)
+        if len(self.__data) > 0 and not hexdata.startswith('0000000000000000') and not hexdata.startswith('000000ff000000ff'):
             startReadOut = True
 
         if startReadOut:
@@ -114,9 +116,9 @@ class ConnectedState:
                 # unable to send image. notify and go to the error state
                 notify(xbmcaddon.Addon().getLocalizedString(32101))
                 return ErrorState(self.__settings)
-        else:
+        #else:
             # Force clearing of priority (mainly for Orbs)
-            self.clear_priority()
+            #self.clear_priority()
 
         # Sleep if any delay is configured
         sleeptime = self.__settings.delay
